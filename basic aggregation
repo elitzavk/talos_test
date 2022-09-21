@@ -10,4 +10,4 @@ SELECT  __market, __symbol , size, TIME_TRUNC(EXTRACT(Time FROM market_timestamp
             
 FROM `production-191601.default_quant.talos_historical_dealer_quotes_complete`  
 Where __year in (2022) and __month in (9) and __day in (13) and __symbol in ('BTC-USD','UNISWAP-USD') and __market in ('b2c2', 'flowtraders') and  TIME_TRUNC(EXTRACT(Time FROM market_timestamp), HOUR) in ('00:00:00', '01:00:00')
-Group BY trade_Date, __market, __symbol , size, rounded_to_hour, order_type, rank
+Group BY trade_Date, __market, __symbol ,  rounded_to_hour, size, order_type, rank
