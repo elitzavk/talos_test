@@ -1,15 +1,66 @@
-# Talos Hourly Avg Price Aggregation
 
-SELECT  __market, __symbol , size, TIME_TRUNC(EXTRACT(Time FROM market_timestamp), HOUR) as rounded_to_hour,
-        EXTRACT(Date FROM market_timestamp) as trade_Date,
+#------------------------------------------
+# Top 5 Levels, By Market, By Hour
+#__________________________________________
 
+SELECT  __market, __symbol , size, rounded_to_hour, trade_Date, 
+        (avg_a_0 + avg_b_0)/2 as b_a_0,
+        (avg_a_1 + avg_b_1)/2 as b_a_1,
+        (avg_a_2 + avg_b_2)/2 as b_a_2,
+        (avg_a_3 + avg_b_3)/2 as b_a_3,       
+        (avg_a_4 + avg_b_4)/2 as b_a_4
+
+  FROM (
+    SELECT  __market, __symbol , size, TIME_TRUNC(EXTRACT(Time FROM market_timestamp), HOUR) as rounded_to_hour,
+        EXTRACT(Date FROM market_timestamp) as trade_Date, 
             avg (CASE When order_type in ('bid') and rank in (0) THEN price END) as avg_b_0 ,
             avg (CASE When order_type in ('bid') and rank in (1) THEN price END) as avg_b_1, 
-           
+            avg (CASE When order_type in ('bid') and rank in (2) THEN price END) as avg_b_2 ,
+            avg (CASE When order_type in ('bid') and rank in (3) THEN price END) as avg_b_3, 
+            avg (CASE When order_type in ('bid') and rank in (4) THEN price END) as avg_b_4, 
+
             avg (CASE When order_type in ('ask') and rank in (0) THEN price END) as avg_a_0,
-            avg (CASE When order_type in ('ask') and rank in (1) THEN price END )as avg_a_1
-            
-    FROM`production-191601.default_quant.talos_historical_dealer_quotes_complete`  
-    Where __year in (2022) and __month in (9) and __day in (13) and __symbol in ('BTC-USD') and __market in ('b2c2', 'flowtraders') and  TIME_TRUNC(EXTRACT(Time FROM market_timestamp), HOUR) in ('00:00:00', '01:00:00')
+            avg (CASE When order_type in ('ask') and rank in (1) THEN price END )as avg_a_1,
+            avg (CASE When order_type in ('ask') and rank in (2) THEN price END) as avg_a_2,
+            avg (CASE When order_type in ('ask') and rank in (3) THEN price END )as avg_a_3,
+            avg (CASE When order_type in ('ask') and rank in (4) THEN price END) as avg_a_4
+
+        FROM`production-191601.default_quant.talos_historical_dealer_quotes_complete`  
+          Where __year in (2022) and __month in (9) and __day in (13) and __symbol in ('BTC-USD','ETH-USD','UNI-USD') and __market in ('b2c2', 'flowtraders', 'cumberland', 'galaxy', 'janestreet' ) and  TIME_TRUNC(EXTRACT(Time FROM market_timestamp), HOUR) in   ('00:00:00', '01:00:00', '02:00:00',  '03:00:00',  '04:00:00',  '05:00:00', '06:00:00')
 Group BY trade_Date, __market, __symbol , size, rounded_to_hour
+  )
 order by trade_Date, __market, __symbol , rounded_to_hour, size
+
+
+#------------------------------------------------------------------
+# Top 5 Levels,All Markets (except wintermute and dvchain), By Hour
+#__________________________________________________________________
+
+
+SELECT __symbol , size, rounded_to_hour, trade_Date, 
+        (avg_a_0 + avg_b_0)/2 as b_a_0,
+        (avg_a_1 + avg_b_1)/2 as b_a_1,
+        (avg_a_2 + avg_b_2)/2 as b_a_2,
+        (avg_a_3 + avg_b_3)/2 as b_a_3,       
+        (avg_a_4 + avg_b_4)/2 as b_a_4
+
+  FROM (
+    SELECT  __symbol , size, TIME_TRUNC(EXTRACT(Time FROM market_timestamp), HOUR) as rounded_to_hour,
+        EXTRACT(Date FROM market_timestamp) as trade_Date, 
+            avg (CASE When order_type in ('bid') and rank in (0) THEN price END) as avg_b_0 ,
+            avg (CASE When order_type in ('bid') and rank in (1) THEN price END) as avg_b_1, 
+            avg (CASE When order_type in ('bid') and rank in (2) THEN price END) as avg_b_2 ,
+            avg (CASE When order_type in ('bid') and rank in (3) THEN price END) as avg_b_3, 
+            avg (CASE When order_type in ('bid') and rank in (4) THEN price END) as avg_b_4, 
+
+            avg (CASE When order_type in ('ask') and rank in (0) THEN price END) as avg_a_0,
+            avg (CASE When order_type in ('ask') and rank in (1) THEN price END )as avg_a_1,
+            avg (CASE When order_type in ('ask') and rank in (2) THEN price END) as avg_a_2,
+            avg (CASE When order_type in ('ask') and rank in (3) THEN price END )as avg_a_3,
+            avg (CASE When order_type in ('ask') and rank in (4) THEN price END) as avg_a_4
+
+        FROM`production-191601.default_quant.talos_historical_dealer_quotes_complete`  
+          Where __year in (2022) and __month in (9) and __day in (13,14,15) and __symbol in ('BTC-USD','ETH-USD','UNI-USD') and __market in ('b2c2', 'flowtraders', 'cumberland', 'galaxy', 'janestreet' )
+Group BY trade_Date, __symbol , size, rounded_to_hour
+  )
+order by trade_Date, __symbol , rounded_to_hour, size
