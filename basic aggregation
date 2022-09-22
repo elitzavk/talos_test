@@ -1,18 +1,35 @@
 
-#------------------------------------------
-# Top 5 Levels, By Market, By Hour
-#__________________________________________
+#----------------------------------------------------------------------------
+# Top 5 Levels,All Markets (except wintermute, dvchain, and galaxy), By Hour
+#____________________________________________________________________________
+#____________________________________________________________________________
+# bam = bid-ask mid point
+# ebs(%) = effective bid spread = bid slippage = (bid - bam) / bam
+# eas(%) = effective ask spread = ask slippage = (ask - bam) / bam
+# ebs(%) = eas(%)
+# ebs(%) + eas(%) = effective spread
+#____________________________________________________________________________
 
-SELECT  __market, __symbol , size, rounded_to_hour, trade_Date, 
-        (avg_a_0 + avg_b_0)/2 as b_a_0,
-        (avg_a_1 + avg_b_1)/2 as b_a_1,
-        (avg_a_2 + avg_b_2)/2 as b_a_2,
-        (avg_a_3 + avg_b_3)/2 as b_a_3,       
-        (avg_a_4 + avg_b_4)/2 as b_a_4
+Select __market, __symbol , size, rounded_to_hour, trade_Date, bam_0, bam_1, bam_2, bam_3, bam_4,
 
-  FROM (
-    SELECT  __market, __symbol , size, TIME_TRUNC(EXTRACT(Time FROM market_timestamp), HOUR) as rounded_to_hour,
-        EXTRACT(Date FROM market_timestamp) as trade_Date, 
+        abs(100*( avg_b_0 - bam_0)/bam_0) as ebs_0,
+        abs(100*( avg_b_1 - bam_1)/bam_1) as ebs_1,
+        abs(100*( avg_b_2 - bam_2)/bam_2) as ebs_2,
+        abs(100*( avg_b_3 - bam_3)/bam_3) as ebs_3,      
+        abs(100*( avg_b_4 - bam_4)/bam_4) as ebs_4,
+
+  FROM 
+    (SELECT  *, 
+        (avg_a_0 + avg_b_0)/2 as bam_0,
+        (avg_a_1 + avg_b_1)/2 as bam_1,
+        (avg_a_2 + avg_b_2)/2 as bam_2,
+        (avg_a_3 + avg_b_3)/2 as bam_3,       
+        (avg_a_4 + avg_b_4)/2 as bam_4,
+
+
+   FROM (
+      SELECT  __market,__symbol , size, TIME_TRUNC(EXTRACT(Time FROM market_timestamp), HOUR) as rounded_to_hour,
+         EXTRACT(Date FROM market_timestamp) as trade_Date, 
             avg (CASE When order_type in ('bid') and rank in (0) THEN price END) as avg_b_0 ,
             avg (CASE When order_type in ('bid') and rank in (1) THEN price END) as avg_b_1, 
             avg (CASE When order_type in ('bid') and rank in (2) THEN price END) as avg_b_2 ,
@@ -26,41 +43,8 @@ SELECT  __market, __symbol , size, rounded_to_hour, trade_Date,
             avg (CASE When order_type in ('ask') and rank in (4) THEN price END) as avg_a_4
 
         FROM`production-191601.default_quant.talos_historical_dealer_quotes_complete`  
-          Where __year in (2022) and __month in (9) and __day in (13) and __symbol in ('BTC-USD','ETH-USD','UNI-USD') and __market in ('b2c2', 'flowtraders', 'cumberland', 'galaxy', 'janestreet' ) and  TIME_TRUNC(EXTRACT(Time FROM market_timestamp), HOUR) in   ('00:00:00', '01:00:00', '02:00:00',  '03:00:00',  '04:00:00',  '05:00:00', '06:00:00')
-Group BY trade_Date, __market, __symbol , size, rounded_to_hour
-  )
-order by trade_Date, __market, __symbol , rounded_to_hour, size
+          Where __year in (2022) and __month in (9) and __day in (13) and __symbol in ('BTC-USD','ETH-USD','UNI-USD') and __market in ('b2c2', 'flowtraders', 'cumberland', 'janestreet' )
+Group BY trade_Date,  __market, __symbol , size, rounded_to_hour
+  ))
 
-
-#------------------------------------------------------------------
-# Top 5 Levels,All Markets (except wintermute and dvchain), By Hour
-#__________________________________________________________________
-
-
-SELECT __symbol , size, rounded_to_hour, trade_Date, 
-        (avg_a_0 + avg_b_0)/2 as b_a_0,
-        (avg_a_1 + avg_b_1)/2 as b_a_1,
-        (avg_a_2 + avg_b_2)/2 as b_a_2,
-        (avg_a_3 + avg_b_3)/2 as b_a_3,       
-        (avg_a_4 + avg_b_4)/2 as b_a_4
-
-  FROM (
-    SELECT  __symbol , size, TIME_TRUNC(EXTRACT(Time FROM market_timestamp), HOUR) as rounded_to_hour,
-        EXTRACT(Date FROM market_timestamp) as trade_Date, 
-            avg (CASE When order_type in ('bid') and rank in (0) THEN price END) as avg_b_0 ,
-            avg (CASE When order_type in ('bid') and rank in (1) THEN price END) as avg_b_1, 
-            avg (CASE When order_type in ('bid') and rank in (2) THEN price END) as avg_b_2 ,
-            avg (CASE When order_type in ('bid') and rank in (3) THEN price END) as avg_b_3, 
-            avg (CASE When order_type in ('bid') and rank in (4) THEN price END) as avg_b_4, 
-
-            avg (CASE When order_type in ('ask') and rank in (0) THEN price END) as avg_a_0,
-            avg (CASE When order_type in ('ask') and rank in (1) THEN price END )as avg_a_1,
-            avg (CASE When order_type in ('ask') and rank in (2) THEN price END) as avg_a_2,
-            avg (CASE When order_type in ('ask') and rank in (3) THEN price END )as avg_a_3,
-            avg (CASE When order_type in ('ask') and rank in (4) THEN price END) as avg_a_4
-
-        FROM`production-191601.default_quant.talos_historical_dealer_quotes_complete`  
-          Where __year in (2022) and __month in (9) and __day in (13,14,15) and __symbol in ('BTC-USD','ETH-USD','UNI-USD') and __market in ('b2c2', 'flowtraders', 'cumberland', 'galaxy', 'janestreet' )
-Group BY trade_Date, __symbol , size, rounded_to_hour
-  )
-order by trade_Date, __symbol , rounded_to_hour, size
+order by trade_Date,  __market, __symbol , rounded_to_hour, size
