@@ -2,12 +2,14 @@
 
 SELECT  __market, __symbol , size, TIME_TRUNC(EXTRACT(Time FROM market_timestamp), HOUR) as rounded_to_hour,
         EXTRACT(Date FROM market_timestamp) as trade_Date,
-            CASE When order_type in ('bid') and rank in (0) THEN avg(price) END as avg_b_0 ,
-            CASE When order_type in ('bid') and rank in (1) THEN avg(price) END as avg_b_1, 
+
+            avg (CASE When order_type in ('bid') and rank in (0) THEN price END) as avg_b_0 ,
+            avg (CASE When order_type in ('bid') and rank in (1) THEN price END) as avg_b_1, 
            
-            CASE When order_type in ('ask') and rank in (0) THEN avg(price) END as avg_a_0,
-            CASE When order_type in ('ask') and rank in (1) THEN avg(price) END as avg_a_1
+            avg (CASE When order_type in ('ask') and rank in (0) THEN price END) as avg_a_0,
+            avg (CASE When order_type in ('ask') and rank in (1) THEN price END )as avg_a_1
             
-FROM `production-191601.default_quant.talos_historical_dealer_quotes_complete`  
-Where __year in (2022) and __month in (9) and __day in (13) and __symbol in ('BTC-USD','UNISWAP-USD') and __market in ('b2c2', 'flowtraders') and  TIME_TRUNC(EXTRACT(Time FROM market_timestamp), HOUR) in ('00:00:00', '01:00:00')
-Group BY trade_Date, __market, __symbol ,  rounded_to_hour, size, order_type, rank
+    FROM`production-191601.default_quant.talos_historical_dealer_quotes_complete`  
+    Where __year in (2022) and __month in (9) and __day in (13) and __symbol in ('BTC-USD') and __market in ('b2c2', 'flowtraders') and  TIME_TRUNC(EXTRACT(Time FROM market_timestamp), HOUR) in ('00:00:00', '01:00:00')
+Group BY trade_Date, __market, __symbol , size, rounded_to_hour
+order by trade_Date, __market, __symbol , rounded_to_hour, size
